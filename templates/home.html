@@ -1,0 +1,12 @@
+<!doctype html>
+<html> 
+    <head>
+        <title>home</title>
+    </head>
+    <body>
+        관심있는 나라
+        {% for weather in result %}
+            <li>{{ weather.city }} : {{ weather.weather  }} : {{ weather.reason }}</li>
+        {% endfor%}
+    </body>
+</html>
