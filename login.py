@@ -67,8 +67,8 @@ def callback():
             sql = "UPDATE `user` SET username = %s WHERE `id` = %s"
             cursor.execute(sql, (username, kakao_id_number))
             db.commit()
-            # return jsonify(status = 200, token = token, user = True)
-            return redirect('http://172.30.1.23:5000/weather')
+            return jsonify(status = 200, token = token, user = True)
+            # return redirect('http://172.30.1.23:5000/weather')
 
         # 유저가 로그인한 이력이 없는 경우 DB에 유저 정보 저장
         else:

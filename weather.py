@@ -35,9 +35,92 @@ Update API : 기존에 있는 도시를 선택한 이유를 변경합니다.
 Delete API : 특정 도시를 제거합니다.
 """
 @weather.route('/weather', methods=['GET'])
+@jwt_required()
 def get():
-    sql = "SELECT id, city_name, reason FROM `city`"
-    cursor.execute(sql)
+    user = get_jwt_identity()
+    sql = "SELECT id, city_name, reason FROM `city` where user_id = %s"
+    cursor.execute(sql, (user))
+    cites = cursor.fetchall()
+    api_key = API_KEY
+
+    weather = []
+    for i in cites:
+        api_url = f'https://api.openweathermap.org/data/2.5/weather?q={i[1]}&appid={api_key}&lang=kr'
+        response = requests.get(api_url)
+        data = json.loads(response.text)
+        city = {"city" : i[1], "weather" : data['weather'][0]['description'], "reason" : i[2]}
+        weather.append(city)
+
+    # return render_template('home.html', result = weather)
+    return jsonify(status = 200, result = weather)
+
+@weather.route('/weather', methods=['POST'])
+@jwt_required()
+def post():
+    args = parser.parse_args()
+    user = get_jwt_identity()
+    sql = "INSERT INTO `city` (`city_name`, `reason`, `user_id`) VALUES (%s, %s, %s)"
+    cursor.execute(sql, (args['city_name'], args['reason'], user))
+    db.commit()
+    
+    
+    # return jsonify(status = 200, result = {"city_name": args["city_name"], "reason": args["reason"]})
+    get_sql = "SELECT id, city_name, reason FROM `city` where user_id = %s"
+    cursor.execute(get_sql, (user))
+    cites = cursor.fetchall()
+    api_key = API_KEY
+
+    weather = []
+    for i in cites:
+        api_url = f'https://api.openweathermap.org/data/2.5/weather?q={i[1]}&appid={api_key}&lang=kr'
+        response = requests.get(api_url)
+        data = json.loads(response.text)
+        city = {"city" : i[1], "weather" : data['weather'][0]['description'], "reason" : i[2]}
+        weather.append(city)
+
+    # return render_template('home.html', result = weather)
+    return jsonify(status = 200, result = weather)
+    # 실행된 후 프론트에서 get으로 redirect -> 추가된 나라의 날씨까지 보임
+
+@weather.route('/weather', methods=['PUT'])
+@jwt_required()
+def put():
+    args = parser.parse_args()
+    user = get_jwt_identity()
+    sql = "UPDATE `city` SET reason = %s WHERE `city_name` = %s and user_id = %s"
+    cursor.execute(sql, (args['reason'], args["city_name"], user))
+    db.commit()
+    
+    # return jsonify(status = "success", result = {"reason": args["reason"], "city_name": args["city_name"]})
+    get_sql = "SELECT id, city_name, reason FROM `city` where user_id = %s"
+    cursor.execute(get_sql, (user))
+    cites = cursor.fetchall()
+    api_key = API_KEY
+
+    weather = []
+    for i in cites:
+        api_url = f'https://api.openweathermap.org/data/2.5/weather?q={i[1]}&appid={api_key}&lang=kr'
+        response = requests.get(api_url)
+        data = json.loads(response.text)
+        city = {"city" : i[1], "weather" : data['weather'][0]['description'], "reason" : i[2]}
+        weather.append(city)
+
+    # return render_template('home.html', result = weather)
+    return jsonify(status = 200, result = weather)
+
+@weather.route('/weather', methods=['DELETE'])
+@jwt_required()
+def delete():
+    args = parser.parse_args()
+    user = get_jwt_identity()
+    sql = "DELETE FROM `city` WHERE `city_name` = %s and user_id = %s"
+    cursor.execute(sql, (args["city_name"], user))
+    db.commit()
+    
+    # return jsonify(status = "success", result = {"city_name": args["city_name"]})
+        # 실행된 후 프론트에서 get으로 redirect -> 삭제한 나라의 날씨 보이지 않음
+    get_sql = "SELECT id, city_name, reason FROM `city` where user_id = %s"
+    cursor.execute(get_sql, (user))
     cites = cursor.fetchall()
     api_key = API_KEY
 
@@ -50,33 +133,5 @@ def get():
         weather.append(city)
 
     return render_template('home.html', result = weather)
-    return jsonify(status = 200, result = weather)
-
-    def post(self):
-        args = parser.parse_args()
-        sql = "INSERT INTO `city` (`city_name`, `reason`) VALUES (%s, %s)"
-        cursor.execute(sql, (args['city_name'], args['reason']))
-        db.commit()
-        
-        return jsonify(status = 200, result = {"city_name": args["city_name"], "reason": args["reason"]})
-        # 실행된 후 프론트에서 get으로 redirect -> 추가된 나라의 날씨까지 보임
-        
-    def put(self):
-        args = parser.parse_args()
-        sql = "UPDATE `city` SET reason = %s WHERE `city_name` = %s"
-        cursor.execute(sql, (args['reason'], args["city_name"]))
-        db.commit()
-        
-        return jsonify(status = "success", result = {"reason": args["reason"], "city_name": args["city_name"]})
-    
-    
-    def delete(self):
-        args = parser.parse_args()
-        sql = "DELETE FROM `city` WHERE `city_name` = %s"
-        cursor.execute(sql, (args["city_name"], ))
-        db.commit()
-        
-        return jsonify(status = "success", result = {"city_name": args["city_name"]})
-        # 실행된 후 프론트에서 get으로 redirect -> 삭제한 나라의 날씨 보이지 않음
 
 # api.add_resource(Weather, '/weather')

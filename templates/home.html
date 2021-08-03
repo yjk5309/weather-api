@@ -6,7 +6,9 @@
     <body>
         관심있는 나라
         {% for weather in result %}
-            <li>{{ weather.city }} : {{ weather.weather  }} : {{ weather.reason }}</li>
+            <li>도시 : {{ weather.city }}</li>
+            <li>날씨 : {{ weather.weather }}</li>
+            <li>이유 : {{ weather.reason }}</li>
         {% endfor%}
     </body>
 </html>
